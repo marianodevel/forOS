@@ -21,6 +21,8 @@ urlpatterns = [
     # User management
     path("users/", include("foros.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
+    path("clientes/", include("foros.clientes.urls", namespace="clientes")),
+    path("gestion/", include("foros.casos.urls", namespace="casos")),
     # Your stuff: custom urls includes go here
     # ...
     # Media files
