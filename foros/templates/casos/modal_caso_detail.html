@@ -1,0 +1,81 @@
+<div class="modal-header">
+  <h5 class="modal-title text-primary">
+    <i class="bi bi-briefcase"></i> {{ caso.titulo_interno }}
+  </h5>
+  <button type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"></button>
+</div>
+<div class="modal-body">
+  <div class="row">
+    <div class="col-md-6 border-end">
+      <h6 class="fw-bold mb-3 text-secondary">Información del Caso</h6>
+      <dl class="row mb-0">
+        <dt class="col-sm-4 text-muted small">Estado:</dt>
+        <dd class="col-sm-8 small">
+          <span class="badge bg-secondary">{{ caso.get_naturaleza_display }}</span>
+        </dd>
+        <dt class="col-sm-4 text-muted small">Ingreso:</dt>
+        <dd class="col-sm-8 small">
+          {{ caso.fecha_ingreso|date:"d/m/Y" }}
+        </dd>
+        <dt class="col-sm-4 text-muted small">Responsable:</dt>
+        <dd class="col-sm-8 small">
+          {% if caso.responsable %}
+            {{ caso.responsable.username }}
+          {% else %}
+            <span class="text-muted fst-italic">Sin asignar</span>
+          {% endif %}
+        </dd>
+        <dt class="col-sm-4 text-muted small">Expediente:</dt>
+        <dd class="col-sm-8 small">
+          {% if caso.expediente %}
+            <a href="{{ caso.expediente.link_detalle|default:'#' }}" target="_blank">{{ caso.expediente.expediente }}</a>
+          {% else %}
+            <span class="text-muted">No vinculado</span>
+          {% endif %}
+        </dd>
+      </dl>
+    </div>
+    <div class="col-md-6">
+      <h6 class="fw-bold mb-3 text-secondary">Datos del Cliente</h6>
+      {% if caso.cliente %}
+        <div class="d-flex align-items-center mb-3">
+          <div class="bg-light rounded-circle p-2 me-2">
+            <i class="bi bi-person fs-4 text-primary"></i>
+          </div>
+          <div>
+            <div class="fw-bold">{{ caso.cliente.nombre_razon_social }}</div>
+            <div class="small text-muted">ID: {{ caso.cliente.id }}</div>
+          </div>
+        </div>
+        <ul class="list-unstyled small mb-0">
+          <li class="mb-2">
+            <i class="bi bi-envelope me-2 text-muted"></i>
+            {% if caso.cliente.email %}
+              <a href="mailto:{{ caso.cliente.email }}">{{ caso.cliente.email }}</a>
+            {% else %}
+              --
+            {% endif %}
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-telephone me-2 text-muted"></i>
+            {{ caso.cliente.telefono|default:"--" }}
+          </li>
+          <li class="mb-2">
+            <i class="bi bi-geo-alt me-2 text-muted"></i>
+            {{ caso.cliente.domicilio|default:"--" }}
+          </li>
+        </ul>
+      {% else %}
+        <div class="alert alert-warning small">
+          <i class="bi bi-exclamation-triangle"></i> No hay cliente asociado.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<div class="modal-footer bg-light">
+  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+</div>

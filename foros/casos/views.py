@@ -12,15 +12,18 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.urls import reverse_lazy
 from django.utils.timezone import make_aware
+from django.views.generic import CreateView
 from django.views.generic import DetailView
 from django.views.generic import FormView
 from django.views.generic import ListView
+from django.views.generic import UpdateView
 
 from .forms import ExpedienteUploadForm
 from .forms import MovimientoUploadForm
 from .models import Caso
 from .models import ExpedienteSiped
 from .models import Movimiento
+from .models import Tarea
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +71,7 @@ class ExpedienteUploadView(LoginRequiredMixin, FormView):
         try:
             content = csv_file.read()
             try:
-                data_set = content.decode("utf-8-sig")  # Soporte BOM
+                data_set = content.decode("utf-8-sig")
             except UnicodeDecodeError:
                 data_set = content.decode("latin-1")
 
@@ -148,7 +151,6 @@ class MovimientoExpedienteUploadView(LoginRequiredMixin, FormView):
     def parse_datetime(self, date_str):
         if not date_str:
             return None
-        # Limpiar espacios múltiples
         date_str = " ".join(date_str.split())
         if not date_str:
             return None
@@ -169,20 +171,13 @@ class MovimientoExpedienteUploadView(LoginRequiredMixin, FormView):
         return None
 
     def reparar_csv_en_memoria(self, content_str):
-        """
-        Une líneas que fueron cortadas incorrectamente en el CSV original.
-        Si una línea no empieza con el patrón de expediente (N/N,),
-        se anexa a la anterior.
-        """
         lines = content_str.splitlines()
         if not lines:
             return io.StringIO("")
 
         fixed_lines = []
-        # Patrón: Inicio de línea + dígitos + / + dígitos + ,
         exp_pattern = re.compile(r"^\d+/\d+,")
 
-        # Siempre conservamos el encabezado
         if len(lines) > 0:
             fixed_lines.append(lines[0])
 
@@ -194,15 +189,12 @@ class MovimientoExpedienteUploadView(LoginRequiredMixin, FormView):
                 continue
 
             if exp_pattern.match(line):
-                # Es una línea nueva válida
                 if current_line:
                     fixed_lines.append(current_line)
                 current_line = line
             else:
-                # Es continuación de la línea anterior rota
                 current_line += " " + line
 
-        # Agregar la última línea pendiente
         if current_line:
             fixed_lines.append(current_line)
 
@@ -226,7 +218,6 @@ class MovimientoExpedienteUploadView(LoginRequiredMixin, FormView):
             except UnicodeDecodeError:
                 content_str = content.decode("latin-1")
 
-            # Reparar líneas rotas antes de parsear
             io_reparado = self.reparar_csv_en_memoria(content_str)
             reader = csv.DictReader(io_reparado)
 
@@ -255,7 +246,6 @@ class MovimientoExpedienteUploadView(LoginRequiredMixin, FormView):
                             nombre_escrito=nombre_escrito,
                             defaults=defaults_data,
                         )
-                    # Fallback si no hay ID de escrito
                     elif f_pres:
                         _, created = Movimiento.objects.update_or_create(
                             expediente=expediente,
@@ -286,3 +276,63 @@ class MovimientoExpedienteUploadView(LoginRequiredMixin, FormView):
             return self.form_invalid(form)
 
         return super().form_valid(form)
+
+
+class MatrizTareasView(LoginRequiredMixin, ListView):
+    model = Caso
+    template_name = "casos/matriz_tareas.html"
+    context_object_name = "casos"
+
+    def get_queryset(self):
+        return Caso.objects.prefetch_related("tareas").all().order_by("-id")
+
+
+class TareaUpdateView(LoginRequiredMixin, UpdateView):
+    model = Tarea
+    fields = [
+        "titulo",
+        "descripcion",
+        "estado",
+        "responsable",
+        "fecha_inicio",
+        "fecha_limite",
+        "fecha_terminacion",
+    ]
+    template_name = "casos/modal_tarea_form.html"
+
+    def get_success_url(self):
+        return reverse_lazy("casos:matriz")
+
+
+class TareaCreateView(LoginRequiredMixin, CreateView):
+    model = Tarea
+    fields = [
+        "titulo",
+        "descripcion",
+        "estado",
+        "responsable",
+        "fecha_inicio",
+        "fecha_limite",
+        "fecha_terminacion",
+    ]
+    template_name = "casos/modal_tarea_form.html"
+
+    def form_valid(self, form):
+        caso = get_object_or_404(Caso, pk=self.kwargs["caso_id"])
+        form.instance.caso = caso
+        form.instance.creado_por = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("casos:matriz")
+
+
+class CasoDetailModalView(LoginRequiredMixin, DetailView):
+    """
+    Muestra la información del Caso y su Cliente en el modal.
+    No requiere modificar modelos, solo renderiza un template parcial.
+    """
+
+    model = Caso
+    template_name = "casos/modal_caso_detail.html"
+    context_object_name = "caso"

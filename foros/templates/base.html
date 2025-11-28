@@ -65,6 +65,9 @@
                 <li class="nav-item">
                   <a class="nav-link" href="{% url 'casos:expediente_list' %}">Expedientes</a>
                 </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'casos:matriz' %}">Matriz de Tareas</a>
+                </li>
                 {% if request.user.is_authenticated %}
                   <li class="nav-item">
                     <a class="nav-link"

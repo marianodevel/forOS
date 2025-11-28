@@ -1,0 +1,37 @@
+{% load crispy_forms_tags %}
+
+<div class="modal-header">
+  <h5 class="modal-title">
+    {% if object %}
+      Editar Tarea: {{ object.titulo }}
+    {% else %}
+      Nueva Tarea
+    {% endif %}
+  </h5>
+  <button type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"></button>
+</div>
+<form method="post" action="{{ request.path }}">
+  {% csrf_token %}
+  <div class="modal-body">
+    <div class="row">
+      <div class="col-12">{{ form.titulo|as_crispy_field }}</div>
+      <div class="col-12">{{ form.descripcion|as_crispy_field }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-6">{{ form.estado|as_crispy_field }}</div>
+      <div class="col-md-6">{{ form.responsable|as_crispy_field }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-4">{{ form.fecha_inicio|as_crispy_field }}</div>
+      <div class="col-md-4">{{ form.fecha_limite|as_crispy_field }}</div>
+      <div class="col-md-4">{{ form.fecha_terminacion|as_crispy_field }}</div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    <button type="submit" class="btn btn-primary">Guardar</button>
+  </div>
+</form>

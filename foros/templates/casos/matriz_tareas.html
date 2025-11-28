@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block content %}
+  <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+  <div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h4">Gestión de Causas</h2>
+      <div>
+        <small class="text-muted me-2" id="last-update">Actualizado: Justo ahora</small>
+        <button onclick="window.location.reload()"
+                class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+    </div>
+    <div class="d-flex flex-row flex-nowrap overflow-auto pb-4 gap-3">
+      {% for caso in casos %}
+        <div class="card shadow-sm flex-shrink-0 caso-card">
+          <div class="card-header bg-white border-bottom">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h6 class="mb-0 text-truncate fw-bold text-primary cursor-pointer caso-title"
+                  title="Ver detalle del caso"
+                  hx-get="{% url 'casos:caso_detalle' caso.id %}"
+                  hx-target="#modal-content"
+                  data-bs-toggle="modal"
+                  data-bs-target="#tareaModal">
+                {{ caso.titulo_interno }} <i class="bi bi-info-circle-fill text-muted ms-1 caso-icon-small"></i>
+              </h6>
+            </div>
+            {% if caso.expediente %}
+              <a href="{{ caso.expediente.link_detalle|default:'#' }}"
+                 target="_blank"
+                 class="badge bg-light text-dark text-decoration-none border d-block text-truncate mb-2">
+                <i class="bi bi-folder2-open"></i> Exp: {{ caso.expediente.expediente }}
+              </a>
+            {% else %}
+              <span class="badge bg-light text-muted border d-block mb-2 fw-normal">Sin expediente</span>
+            {% endif %}
+            <div class="text-end">
+              <button class="btn btn-xs btn-outline-primary py-0 w-100"
+                      hx-get="{% url 'casos:tarea_crear' caso.id %}"
+                      hx-target="#modal-content"
+                      data-bs-toggle="modal"
+                      data-bs-target="#tareaModal">+ Tarea</button>
+            </div>
+          </div>
+          <div class="card-body p-2 d-flex flex-column gap-2 caso-tasks-scroll">
+            {% for tarea in caso.tareas.all %}
+              <div class="card border-0 shadow-sm cursor-pointer position-relative text-white bg-{{ tarea.color_bootstrap }}"
+                   role="button"
+                   hx-get="{% url 'casos:tarea_editar' tarea.id %}"
+                   hx-target="#modal-content"
+                   data-bs-toggle="modal"
+                   data-bs-target="#tareaModal">
+                <div class="card-body p-2">
+                  <h6 class="card-title fs-6 mb-1">{{ tarea.titulo }}</h6>
+                  <div class="d-flex justify-content-between align-items-end">
+                    <small class="opacity-75 task-meta">
+                      {% if tarea.responsable %}
+                        <i class="bi bi-person-circle"></i> {{ tarea.responsable.username|slice:":3" }}
+                      {% else %}
+                        --
+                      {% endif %}
+                    </small>
+                    {% if tarea.fecha_limite %}
+                      <small class="badge bg-dark bg-opacity-25 task-date">{{ tarea.fecha_limite|date:"d/m" }}</small>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              <div class="text-center text-muted mt-4">
+                <small>Sin tareas</small>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="modal fade" id="tareaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content" id="modal-content">
+        <div class="modal-body text-center p-5">
+          <div class="spinner-border text-primary" role="status"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    setInterval(function() {
+      if (!document.querySelector('.modal.show')) {
+        window.location.reload();
+      }
+    }, 60000);
+
+    const now = new Date();
+    document.getElementById('last-update').innerText = "Act: " + now.toLocaleTimeString();
+  </script>
+  <style>
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #aaa;
+    }
+
+    /* Clases personalizadas para eliminar estilos inline */
+    .caso-card {
+      width: 300px;
+      background-color: #f8f9fa;
+    }
+
+    .caso-title {
+      max-width: 100%;
+      cursor: pointer;
+    }
+
+    .caso-icon-small {
+      font-size: 0.7em;
+    }
+
+    .caso-tasks-scroll {
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .task-meta {
+      font-size: 0.75rem;
+    }
+
+    .task-date {
+      font-size: 0.7rem;
+    }
+
+    .cursor-pointer {
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .cursor-pointer:hover {
+      transform: scale(1.02);
+    }
+  </style>
+{% endblock content %}
