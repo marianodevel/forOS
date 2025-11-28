@@ -1,19 +1,16 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from foros.clientes.models import Cliente
 
 
-# --- Modelo 2 (de 5): ExpedienteSiped ---
-# Representa el expediente externo/oficial (ej. SIPED)
-# Contiene los campos del CSV "expedientes_completos.csv"
 class ExpedienteSiped(models.Model):
     """
     El registro oficial/externo del SIPED.
     Los campos coinciden con los del CSV "expedientes_completos.csv".
     """
 
-    # --- Datos del Expediente (SIPED) ---
     expediente = models.CharField(
         max_length=100,
         unique=True,
@@ -52,8 +49,6 @@ class ExpedienteSiped(models.Model):
         return f"{self.expediente} - {self.dependencia or ''}"
 
 
-# --- Modelo 3 (de 5): Caso ---
-# Representa nuestro legajo interno
 class Caso(models.Model):
     """
     Nuestro legajo interno. Es el corazón del sistema.
@@ -64,15 +59,14 @@ class Caso(models.Model):
         EXTRAJUDICIAL = "EXTRAJUDICIAL", "Extrajudicial"
         ADMINISTRATIVO = "ADMINISTRATIVO", "Administrativo"
 
-    # --- Relaciones ---
     cliente = models.ForeignKey(
         Cliente,
         on_delete=models.PROTECT,
         related_name="casos",
     )
     expediente = models.ForeignKey(
-        ExpedienteSiped,  # <-- Actualizado nombre de clase
-        on_delete=models.SET_NULL,  # Un caso puede tener un exp. externo
+        ExpedienteSiped,
+        on_delete=models.SET_NULL,
         blank=True,
         null=True,
         related_name="casos",
@@ -85,7 +79,6 @@ class Caso(models.Model):
         related_name="casos_responsable",
     )
 
-    # --- Datos del Caso ---
     titulo_interno = models.CharField(
         max_length=255,
         help_text="Nombre descriptivo interno (Ej: Sucesión Pérez)",
@@ -105,23 +98,28 @@ class Caso(models.Model):
         return self.titulo_interno
 
 
-# --- Modelo 4 (de 5): Tarea ---
-# Representa CADA movimiento INTERNO del estudio (tareas, notas, etc.)
 class Tarea(models.Model):
     """
     Cada una de las novedades o tareas INTERNAS asociadas a un Caso.
     """
 
     class Estado(models.TextChoices):
-        PENDIENTE = "PENDIENTE", "Pendiente"
-        A_REVISAR = "A_REVISAR", "A revisar"
-        COMPLETADO = "COMPLETADO", "Completado"
+        A_REALIZAR = "A_REALIZAR", "A Realizar"  # Rojo
+        REALIZADA = "REALIZADA", "Realizada"  # Verde
+        A_CONTROLAR = "A_CONTROLAR", "A Controlar"  # Amarillo
+        ESPERANDO = "ESPERANDO", "Esperando"  # Azul
 
-    # --- Relaciones Internas ---
     caso = models.ForeignKey(
         Caso,
-        on_delete=models.CASCADE,  # Se liga a NUESTRO caso
+        on_delete=models.CASCADE,
         related_name="tareas",
+    )
+    responsable = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="tareas_asignadas",
     )
     creado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -131,41 +129,51 @@ class Tarea(models.Model):
         related_name="tareas_creadas",
     )
 
-    # --- Datos Internos ---
-    fecha = models.DateTimeField(auto_now_add=True)
-    descripcion = models.TextField()
+    titulo = models.CharField(max_length=200, help_text="Título corto para la vista")
+    descripcion = models.TextField(blank=True)
+
+    fecha_inicio = models.DateField(default=timezone.now)
+    fecha_limite = models.DateField(null=True, blank=True)
+    fecha_terminacion = models.DateField(null=True, blank=True)
+
     estado = models.CharField(
         max_length=20,
         choices=Estado.choices,
-        default=Estado.PENDIENTE,
-        help_text="Estado interno de la tarea",
+        default=Estado.A_REALIZAR,
     )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Tarea Interna"
         verbose_name_plural = "Tareas Internas"
-        ordering = ["-fecha"]  # El más nuevo primero
+        ordering = ["fecha_limite", "-fecha_creacion"]
 
     def __str__(self):
-        return f"{self.fecha.strftime('%Y-%m-%d')} - {self.descripcion[:40]}..."
+        return f"{self.titulo} - {self.get_estado_display()}"
+
+    @property
+    def color_bootstrap(self):
+        mapping = {
+            self.Estado.A_REALIZAR: "danger",
+            self.Estado.REALIZADA: "success",
+            self.Estado.A_CONTROLAR: "warning",
+            self.Estado.ESPERANDO: "info",
+        }
+        return mapping.get(self.estado, "secondary")
 
 
-# --- Modelo 5 (de 5): Movimiento ---
-# Representa CADA movimiento del CSV "19827-2025..."
 class Movimiento(models.Model):
     """
     Cada uno de los movimientos del sistema externo (SIPED),
     asociado a un ExpedienteSiped.
     """
 
-    # --- Relación ---
     expediente = models.ForeignKey(
-        ExpedienteSiped,  # <-- Actualizado nombre de clase
-        on_delete=models.CASCADE,  # Se liga al EXPEDIENTE externo
+        ExpedienteSiped,
+        on_delete=models.CASCADE,
         related_name="movimientos",
     )
 
-    # --- Campos del CSV (SIPED) ---
     nombre_escrito = models.CharField(max_length=100, blank=True)
     link_escrito = models.URLField(max_length=500, blank=True)
     fecha_presentacion = models.DateTimeField(null=True, blank=True)

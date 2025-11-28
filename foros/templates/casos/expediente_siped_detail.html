@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold text-gray-900">Expediente: {{ expediente.expediente }}</h1>
+      <a href="{% url 'casos:expediente_list' %}"
+         class="text-blue-600 hover:text-blue-800 font-medium">← Volver al listado</a>
+    </div>
+    <div class="bg-white shadow rounded-lg p-6 mb-8 border-l-4 border-blue-500">
+      <h2 class="text-xl font-semibold mb-4 text-gray-800">Detalles de la Causa</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="col-span-1 md:col-span-2">
+          <p class="text-sm text-gray-500">Carátula</p>
+          <p class="font-medium text-lg">{{ expediente.caratula }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Estado Actual</p>
+          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+            {{ expediente.estado }}
+          </span>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Dependencia</p>
+          <p class="font-medium">{{ expediente.dependencia }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Secretaría</p>
+          <p class="font-medium">{{ expediente.secretaria|default:"-" }}</p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-500">Último Movimiento</p>
+          <p class="font-medium">{{ expediente.fec_ult_mov|date:"d/m/Y"|default:"-" }}</p>
+        </div>
+      </div>
+      {% if expediente.link_detalle %}
+        <div class="mt-4 pt-4 border-t">
+          <a href="{{ expediente.link_detalle }}"
+             target="_blank"
+             class="text-sm text-blue-600 hover:underline">Ver en sistema oficial (SIPED) →</a>
+        </div>
+      {% endif %}
+    </div>
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+        <h3 class="text-lg font-bold text-gray-700">Movimientos / Historial</h3>
+        <a href="{% url 'casos:movimiento_expediente_import' expediente.pk %}"
+           class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 px-3 rounded shadow">
+          + Subir Movimientos (CSV)
+        </a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descripción</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for mov in movimientos %}
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                  {{ mov.fecha_presentacion|date:"d/m/Y H:i" }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ mov.tipo }}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">
+                  <div class="max-w-md truncate" title="{{ mov.descripcion }}">{{ mov.descripcion|default:"-" }}</div>
+                  <div class="text-xs text-gray-400 mt-1">{{ mov.nombre_escrito }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{{ mov.estado }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" class="px-6 py-4 text-center text-gray-500 text-sm">No hay movimientos registrados.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

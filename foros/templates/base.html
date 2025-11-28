@@ -19,28 +19,20 @@
     <meta name="author" content="Mariano Bustos" />
     <link rel="icon" href="{% static 'images/favicons/favicon.ico' %}" />
     {% block css %}
-      <!-- Latest compiled and minified Bootstrap CSS -->
       <link rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css"
             integrity="sha512-SbiR/eusphKoMVVXysTKG/7VseWii+Y3FdHrt0EpKgpToZeemhqHeZeLWLhJutz/2ut2Vw1uQEj2MbRF+TVBUA=="
             crossorigin="anonymous"
             referrerpolicy="no-referrer" />
-      <!-- Your stuff: Third-party CSS libraries go here -->
-      <!-- This file stores project-specific CSS -->
       <link href="{% static 'css/project.css' %}" rel="stylesheet" />
     {% endblock css %}
-    <!-- Le javascript
-    ================================================== -->
     {# Placed at the top of the document so pages load faster with defer #}
     {% block javascript %}
-      <!-- Bootstrap JS -->
       <script defer
               src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/js/bootstrap.min.js"
               integrity="sha512-1/RvZTcCDEUjY/CypiMz+iqqtaoQfAITmNSJY17Myp4Ms5mdxPS5UV7iOfdZoxcGhzFbOm6sntTKJppjvuhg4g=="
               crossorigin="anonymous"
               referrerpolicy="no-referrer"></script>
-      <!-- Your stuff: Third-party javascript libraries go here -->
-      <!-- place project specific Javascript in this file -->
       <script defer src="{% static 'js/project.js' %}"></script>
     {% endblock javascript %}
   </head>
@@ -66,6 +58,12 @@
                 </li>
                 <li class="nav-item">
                   <a class="nav-link" href="{% url 'about' %}">About</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'clientes:list' %}">Clientes</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{% url 'casos:expediente_list' %}">Expedientes</a>
                 </li>
                 {% if request.user.is_authenticated %}
                   <li class="nav-item">
@@ -112,7 +110,6 @@
         {% endblock main %}
       </div>
     {% endblock body %}
-    <!-- /container -->
     {% block modal %}
     {% endblock modal %}
     {% block inline_javascript %}

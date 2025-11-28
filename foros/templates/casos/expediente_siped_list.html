@@ -2,7 +2,13 @@
 
 {% block content %}
   <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-6">Listado de Expedientes (SIPED)</h1>
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold text-gray-900">Listado de Expedientes (SIPED)</h1>
+      <a href="{% url 'casos:expediente_import' %}"
+         class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow text-sm">
+        Importar Expedientes
+      </a>
+    </div>
     <div class="overflow-x-auto bg-white shadow-md rounded-lg">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
@@ -16,6 +22,8 @@
               Dependencia
             </th>
             <th scope="col"
+                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Secretaría</th>
+            <th scope="col"
                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
             <th scope="col"
                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Últ. Mov.</th>
@@ -25,13 +33,20 @@
           {% for exp in expedientes %}
             <tr class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">{{ exp.expediente }}</div>
+                <a href="{% url 'casos:expediente_detail' exp.pk %}"
+                   class="text-sm font-medium text-blue-600 hover:text-blue-900 hover:underline">
+                  {{ exp.expediente }}
+                </a>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-700 truncate max-w-xs">{{ exp.caratula }}</div>
+                <div class="text-sm text-gray-700 truncate max-w-xs"
+                     title="{{ exp.caratula }}">{{ exp.caratula }}</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <div class="text-sm text-gray-700">{{ exp.dependencia }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-700">{{ exp.secretaria|default:"-" }}</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -44,7 +59,7 @@
             </tr>
           {% empty %}
             <tr>
-              <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No hay expedientes registrados.</td>
+              <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No hay expedientes registrados.</td>
             </tr>
           {% endfor %}
         </tbody>
